@@ -1,2 +1,5 @@
 .idea/
 __pycache__/
+images_paths.csv
+index_file.csv
+temp.py
