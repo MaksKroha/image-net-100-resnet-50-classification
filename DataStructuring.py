@@ -34,8 +34,8 @@ class DataStruct:
             raise Exception("incorrect csv file extension")
         with open(indexed_file_path, "w", newline="\n") as file:
             writer = csv.writer(file)
-            data = Convertor.format_packages_to_tuples(main_data_folder_path,
-                                                       main_xml_folder_path)
+            data = DataStruct.format_packages_to_tuples(main_data_folder_path,
+                                                        main_xml_folder_path)
             writer.writerows(data)
         print("Created an indexed csv file!")
 
@@ -57,12 +57,12 @@ class DataStruct:
         print("Created csv file with images paths!")
 
     @staticmethod
-    def read_wnid_int_name_file(wnid_int_name_path):
+    def read_wnid_int_name_file(wnid_int_name_path="index_file.csv"):
         with open(wnid_int_name_path, "r", newline="\n") as file_thread:
             return list(csv.reader(file_thread, delimiter=","))
 
     @staticmethod
-    def read_images_paths(images_file_path):
+    def read_images_paths_int_vals(images_file_path="images_paths.csv"):
         with open(images_file_path, "r", newline="\n") as file_thread:
-            return list(csv.reader(file_thread, delimiter=""))
+            return list(csv.reader(file_thread, delimiter=","))
 
