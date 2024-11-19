@@ -16,7 +16,11 @@ if __name__ == "__main__":
         # Normalize class do not count mean and std vals by itself
         # we just indicates those values in parameters
         # Those vals is developed by time (experience)
-        transforms.Normalize([0.5, 0.5, 0.4], [0.23, 0.23, 0.23])
+        transforms.Normalize([0.5, 0.5, 0.4], [0.23, 0.23, 0.23]),
+        transforms.RandomHorizontalFlip(p=0.5),  # 50% probability to flip
+        # contrast it is difference between bright and dark pixels
+        # range of contrast constant is [1 - 0.5,  1 + 0.5]
+        transforms.ColorJitter(contrast=0.5)
     ])
 
     # DataLoader.shuffle_csv_file_by_rows(image_paths_file, images_num, 3)
