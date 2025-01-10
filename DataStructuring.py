@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import numpy
 
 
 class DataStruct:
@@ -45,6 +46,8 @@ class DataStruct:
         # image paths and their int _value. Main folder must
         # contain a lot of folders and in every folder must be
         # certain amount of images
+        # TODO: delete counter
+        counter = 0
         if csv_file[-4:] != ".csv":
             raise Exception("Incorrect csv file extension")
         if delete_previous:
@@ -52,9 +55,25 @@ class DataStruct:
         with open(csv_file, "a", newline="\n") as csv_thread:
             writer = csv.writer(csv_thread)
             for folder in os.listdir(main_folder_path):
+                if counter >= 4:
+                    return
+                counter += 1
                 for file in os.listdir(main_folder_path + fr"\{folder}"):
                     writer.writerow((main_folder_path + fr"\{folder}\{file}", dict_wnid_int[folder[1:]]))
         print("Created csv file with images paths!")
+
+    @staticmethod
+    def shuffle_csv_file_by_rows(csv_file_path, shuffle_iterations):
+        data = numpy.array([])
+        with open(csv_file_path, "r", newline="\n") as csv_thread:
+            reader = csv.reader(csv_thread, delimiter=",")
+            data = numpy.array([el for el in reader])
+            for _ in range(shuffle_iterations):
+                numpy.random.shuffle(data)
+        with open(csv_file_path, "w", newline="\n") as csv_thread:
+            writer = csv.writer(csv_thread, delimiter=",")
+            writer.writerows(data)
+
 
     @staticmethod
     def read_wnid_int_name_file(wnid_int_name_path="index_file.csv"):
