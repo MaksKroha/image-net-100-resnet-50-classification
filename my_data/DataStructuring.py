@@ -41,7 +41,7 @@ class DataStruct:
         print("Created an indexed csv file!")
 
     @staticmethod
-    def create_images_paths(csv_file, dict_wnid_int, main_folder_path, delete_previous=False):
+    def create_images_paths(csv_file, dict_wnid_int, main_folder_path, delete_previous=False, classes_counter=120):
         # this function create a "csv" file which contains all
         # image paths and their int _value. Main folder must
         # contain a lot of folders and in every folder must be
@@ -55,7 +55,7 @@ class DataStruct:
         with open(csv_file, "a", newline="\n") as csv_thread:
             writer = csv.writer(csv_thread)
             for folder in os.listdir(main_folder_path):
-                if counter >= 4:
+                if counter >= classes_counter:
                     return
                 counter += 1
                 for file in os.listdir(main_folder_path + fr"\{folder}"):

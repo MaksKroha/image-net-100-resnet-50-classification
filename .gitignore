@@ -1,7 +1,7 @@
 .idea/
 __pycache__/
 images_paths.csv
-index_file.csv
+csvs/index_file.csv
 temp_images_path.csv
 temp.py
 parameters

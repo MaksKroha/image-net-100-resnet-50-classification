@@ -1,13 +1,13 @@
 import torch
 from torch import nn
-import random
+from sklearn.metrics import accuracy_score
 import numpy as np
 
 
 class Model(nn.Module):
     def __init__(self):
+        torch.set_default_dtype(torch.float32)
         self.block_probs = []
-
         super(Model, self).__init__()
 
         # conv1_x
@@ -105,17 +105,17 @@ class Model(nn.Module):
 
     def forward(self, images):
         blocks_remain = np.random.binomial(1, self.block_probs) if self.training else self.block_probs
-
+        print(blocks_remain)
         tensor = self.main_conv(images)
         tensor = self.main_max_pool(tensor)
 
         blocks_count = 0
         for block_id in range(len(self.conv2_x)):
             skip_con = self.skip_con2_x[block_id](tensor)
-            if self.block_probs[blocks_count] != 0:
+            if blocks_remain[blocks_count] != 0:
                 for layer in self.conv2_x[block_id]:
                     tensor = layer(tensor)
-                tensor *= self.block_probs[blocks_count]
+                tensor *= blocks_remain[blocks_count]
             else:
                 tensor = 0
 
@@ -126,10 +126,10 @@ class Model(nn.Module):
 
         for block_id in range(len(self.conv3_x)):
             skip_con = self.skip_con3_x[block_id](tensor)
-            if self.block_probs[blocks_count] != 0:
+            if blocks_remain[blocks_count] != 0:
                 for layer in self.conv3_x[block_id]:
                     tensor = layer(tensor)
-                tensor *= self.block_probs[blocks_count]
+                tensor *= blocks_remain[blocks_count]
             else:
                 tensor = 0
 
@@ -138,12 +138,13 @@ class Model(nn.Module):
 
             blocks_count += 1
 
+
         for block_id in range(len(self.conv4_x)):
             skip_con = self.skip_con4_x[block_id](tensor)
-            if self.block_probs[blocks_count] != 0:
+            if blocks_remain[blocks_count] != 0:
                 for layer in self.conv4_x[block_id]:
                     tensor = layer(tensor)
-                tensor *= self.block_probs[blocks_count]
+                tensor *= blocks_remain[blocks_count]
             else:
                 tensor = 0
 
@@ -155,10 +156,10 @@ class Model(nn.Module):
 
         for block_id in range(len(self.conv5_x)):
             skip_con = self.skip_con5_x[block_id](tensor)
-            if self.block_probs[blocks_count] != 0:
+            if blocks_remain[blocks_count] != 0:
                 for layer in self.conv5_x[block_id]:
                     tensor = layer(tensor)
-                tensor *= self.block_probs[blocks_count]
+                tensor *= blocks_remain[blocks_count]
             else:
                 tensor = 0
 
@@ -168,7 +169,6 @@ class Model(nn.Module):
             blocks_count += 1
 
         tensor = torch.mean(tensor, dim=(2, 3))
-        print(f"blocks alive - {blocks_remain}")
         return self.fcn(tensor)
 
 
@@ -178,10 +178,12 @@ class Model(nn.Module):
             prob = 1 - block_id / (blocks_num - 1) * (1 - p_last)
             self.block_probs.append(np.round(prob, 3))
 
-    def backward(self, logits, labels, optimizer, print_loss=False):
-        loss = nn.CrossEntropyLoss()(logits, labels)
+    def backward(self, logits, labels, optimizer, print_loss=False, lb_epsi=0.1):
+        loss = nn.CrossEntropyLoss(label_smoothing=lb_epsi)(logits, labels)
+        preds = torch.argmax(logits, dim=1)
+        accuracy = accuracy_score(labels.cpu().numpy(), preds.cpu().numpy())
         if print_loss:
-            print(f"Loss: {loss.item()}", end=" ")
+            print(f"Loss: {loss.item()}, Accuracy: {accuracy}", end=" ")
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
