@@ -5,3 +5,5 @@ csvs/index_file.csv
 temp_images_path.csv
 temp.py
 parameters
+Main.py
+data/
