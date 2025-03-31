@@ -3,21 +3,23 @@ from torch import nn
 
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, output_classes):
         torch.set_default_dtype(torch.float32)
         super(Model, self).__init__()
 
         # conv1_x
         self.main_conv = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
         self.main_max_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-
         # realized bottleneck blocks in "full pre-activation" style
         self.conv2_x = nn.ModuleList([])
         self.skip_con2_x = nn.ModuleList([])
         input_size = 64
         blocks_quality = 3
         for i in range(blocks_quality):
-            self.skip_con2_x.append(nn.Conv2d(input_size, 256, kernel_size=1, bias=False))
+            if i == 0:
+                self.skip_con2_x.append(nn.Conv2d(input_size, 256, kernel_size=1, bias=False))
+            else:
+                self.skip_con2_x.append(nn.Identity())
 
             self.conv2_x.append(nn.ModuleList([]))
             self.conv2_x[i].append(nn.Conv2d(input_size, 64, kernel_size=1, bias=False))
@@ -36,7 +38,10 @@ class Model(nn.Module):
         self.skip_con3_x = nn.ModuleList([])
         blocks_quality = 4
         for i in range(blocks_quality):
-            self.skip_con3_x.append(nn.Conv2d(input_size, 512, kernel_size=1, bias=False))
+            if i == 0 :
+                self.skip_con3_x.append(nn.Conv2d(input_size, 512, kernel_size=1, bias=False))
+            else:
+                self.skip_con3_x.append(nn.Identity())
 
             self.conv3_x.append(nn.ModuleList([]))
             self.conv3_x[i].append(nn.Conv2d(input_size, 128, kernel_size=1, bias=False))
@@ -58,7 +63,10 @@ class Model(nn.Module):
         self.skip_con4_x = nn.ModuleList([])
         blocks_quality = 6
         for i in range(blocks_quality):
-            self.skip_con4_x.append(nn.Conv2d(input_size, 1024, kernel_size=1, bias=False))
+            if i == 0:
+                self.skip_con4_x.append(nn.Conv2d(input_size, 1024, kernel_size=1, bias=False))
+            else:
+                self.skip_con4_x.append(nn.Identity())
 
             self.conv4_x.append(nn.ModuleList([]))
             self.conv4_x[i].append(nn.Conv2d(input_size, 256, kernel_size=1, bias=False))
@@ -79,7 +87,10 @@ class Model(nn.Module):
         self.skip_con5_x = nn.ModuleList([])
         blocks_quality = 3
         for i in range(blocks_quality):
-            self.skip_con5_x.append(nn.Conv2d(input_size, 2048, kernel_size=1, bias=False))
+            if i == 0:
+                self.skip_con5_x.append(nn.Conv2d(input_size, 2048, kernel_size=1, bias=False))
+            else:
+                self.skip_con5_x.append(nn.Identity())
 
             self.conv5_x.append(nn.ModuleList([]))
             self.conv5_x[i].append(nn.Conv2d(input_size, 512, kernel_size=1, bias=False))
@@ -98,19 +109,20 @@ class Model(nn.Module):
 
         # Global average pooling
 
-        self.fcn = nn.Linear(2048, 120)
+        self.fcn = nn.Linear(2048, output_classes)
 
     def forward(self, input_tensors):
         convs_x = [self.conv2_x, self.conv3_x, self.conv4_x, self.conv5_x]
+        skip_cons_x = [self.skip_con2_x, self.skip_con3_x, self.skip_con4_x, self.skip_con5_x]
 
         tensor = self.main_conv(input_tensors)
         tensor = self.main_max_pool(tensor)
 
-        for conv_x in convs_x:
-            for block_id in range(len(conv_x)):
-                skip_con = conv_x[block_id](tensor)
+        for i in range(len(convs_x)):
+            for block_id in range(len(convs_x[i])):
+                skip_con = skip_cons_x[i][block_id](tensor)
 
-                for layer in conv_x[block_id]:
+                for layer in convs_x[i][block_id]:
                     tensor = layer(tensor)
 
                 tensor = skip_con + tensor

@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-from model.neural_net import Model
+from src.model.neural_net import Model
 from src.backward import backward
 
 
@@ -27,6 +27,9 @@ def train(model: Model, data_loader: DataLoader, epochs: int,
 
     for epoch in range(epochs):
         for batch in data_loader:
+            batch['labels'] = batch['labels'].to(device)
+            batch['image'] = batch['image'].to(device)
+
             logits = model(batch['image'])
             backward(logits, batch['labels'], optim)
 
