@@ -1,3 +1,12 @@
+# Setting settings for logining file
+import logging
+logging.basicConfig(
+    filename='logs.log',
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s %(filename)s:%(lineno)d (%(funcName)s) - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+
 import torch
 from torch.utils.data import DataLoader
 from torch.xpu import device

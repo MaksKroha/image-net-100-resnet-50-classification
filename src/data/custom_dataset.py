@@ -1,9 +1,7 @@
 import torch
 from torch.utils.data import Dataset
-import os
 import pandas as pd
 from skimage import io
-import numpy as np
 
 
 class ImageNetDataset(Dataset):
