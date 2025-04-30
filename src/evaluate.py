@@ -8,7 +8,8 @@ from src.utils.logger import log_exception
 
 def evaluate(model: Model, data_loader: DataLoader, test_img_num):
     print("Evaluating model")
-
+    
+    model = model.to("cpu")
     model.eval()
     if data_loader.batch_size != 1:
         return "der batch size must be 1"
@@ -16,10 +17,11 @@ def evaluate(model: Model, data_loader: DataLoader, test_img_num):
     for i_image, image in enumerate(data_loader):
         try:
             logits = model(image['image'])
+            max_val, max_index = torch.max(softmax(logits, dim=1), dim=1)
+            max_val = max_val.item()
+            max_index = max_index.item()
             print(f"************ {i_image} ************\n"
-                  f"{softmax(logits, dim=1)}\n"
-                  f"prediction - {torch.argmax(logits).item()}, actually {image['labels']}")
-            print(f"logits {logits}")
+                  f"prediction - {max_index} {max_val}%, actually {image['labels']}")
 
             if i_image >= test_img_num:
                 break

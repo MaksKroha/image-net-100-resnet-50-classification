@@ -20,9 +20,9 @@ def format_paths_into_csv_name_label(root_dir, output_csv, labels_json):
             # iterating through all dirs/files
             for file in os.listdir(root_dir):
                 # checking if file have right extension
-                if file.endswith(".jpg") or file.endswith(".jpeg"):
+                if file[-4:].lower() == ".jpg" or file[-5:].lower() == ".jpeg":
                     # checking if have enough length and if in json_data
-                    if len(file) > 15 and file[:9] in json_data: # n02011460_0.jpg
+                    if len(file) > 9 and file[:9] in json_data: # n02011460_0.jpg
                         writer.writerow([f"{root_dir}/{file}", json_data[file[:9]]["index"]])
     except Exception as e:
         log_exception(str(e))

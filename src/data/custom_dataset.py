@@ -1,29 +1,17 @@
 import torch
 from torch.utils.data import Dataset
-import pandas as pd
-from skimage import io
-
+import lmdb
 
 class ImageNetDataset(Dataset):
-    def __init__(self, csv_file, transform=None):
-        print(csv_file)
-        self.landmarks_frame = pd.read_csv(csv_file)
-        self.transform = transform
+    def __init__(self, lmdb, lmdb_length, transform=None):
+        self.lmdb = lmdb
+        self.lmdb_length = lmdb_length
 
     def __len__(self):
-        return self.landmarks_frame.dropna(how='all').shape[0]
+        return self.lmdb_length
 
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-
-        image = io.imread(self.landmarks_frame.iloc[idx, 0])
-
-        label = self.landmarks_frame.iloc[idx, 1]
-        label = torch.tensor(label, dtype=torch.long)
+        image, label = self.lmdb.get_by_index(idx)
+        image = image.to(torch.float32) / 255 # normalization
         sample = {'image': image, 'labels': label}
-
-        if self.transform:
-            sample["image"] = self.transform(image)
-
         return sample
