@@ -4,7 +4,7 @@ from src.utils.logger import exception_logger
 
 
 class Model(nn.Module):
-    def __init__(self, output_classes):
+    def __init__(self, output_classes, dropout=0.5):
         torch.set_default_dtype(torch.float32)
         super(Model, self).__init__()
 
@@ -109,7 +109,7 @@ class Model(nn.Module):
         self.conv5_x[0][0].stride = 2
 
         # Global average pooling
-
+        self.dropout = nn.Dropout(p=dropout)
         self.fcn = nn.Linear(2048, output_classes)
 
     @exception_logger
@@ -131,6 +131,7 @@ class Model(nn.Module):
                 tensor = nn.functional.relu(tensor, inplace=True)
 
         tensor = torch.mean(tensor, dim=[2, 3])
+        tensor = self.dropout(tensor)
         tensor = self.fcn(tensor)
 
         return tensor

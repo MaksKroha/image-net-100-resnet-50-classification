@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from pathlib import Path
 import json
 
-from src.utils.logger import exception_logger, log_exception
+from src.utils.logger import exception_logger
 
 
 class LMDB:
@@ -29,48 +29,50 @@ class LMDB:
         else:
             raise NameError("Bad jpeg file name (there is no nxxxxxxxx)")
 
+
+    @exception_logger
+    def __put_image(self, txn, folder_path, img_name, current_idx):
+        if not (img_name.lower().endswith(".jpeg") or img_name.lower().endswith(".jpg")):
+            return None
+
+        with Image.open(f"{folder_path}/{img_name}") as img:
+            img = img.convert('RGB')
+            tensor = self.transform(img)
+
+            if tensor.dtype != torch.uint8:
+                tensor = tensor.to(torch.uint8)
+
+            label = self.get_label(img_name)
+
+            key = f"{current_idx:010d}".encode()
+            value = (tensor, label)
+
+            buffer = io.BytesIO()
+            torch.save(value, buffer)
+
+            txn.put(key, buffer.getvalue())
+        return 0
+
+
     @exception_logger
     def add_images_from_folder(self, folder_path):
         """
         Add all images from a folder to LMDB
         """
 
-        image_paths = [image for image in os.listdir(folder_path)]
+        image_names = [image for image in os.listdir(folder_path)]
 
         with self.env.begin(write=True) as txn:
             current_idx = self.get_last_index(txn)
             if current_idx is None:
                 raise IndexError("LMDB wrong index")
 
-
-            for img_path in image_paths:
-                try:
-                    if not (img_path.lower().endswith(".jpeg") or img_path.lower().endswith(".jpg")):
-                        continue
-
-                    with Image.open(f"{folder_path}/{img_path}") as img:
-                        img = img.convert('RGB')
-                        tensor = self.transform(img)
-
-                        if tensor.dtype != torch.uint8:
-                            tensor = tensor.to(torch.uint8)
-
-                        label = self.get_label(img_path)
-
-                        new_idx = current_idx + 1
-                        key = f"{current_idx:010d}".encode()
-                        value = (tensor, label)
-
-                        buffer = io.BytesIO()
-                        torch.save(value, buffer)
-
-                        txn.put(key, buffer.getvalue())
-
-                        current_idx = new_idx
-                except Exception as e: # TODO: Change Exception type
-                    log_exception(str(e))
+            for img_name in image_names:
+                if self.__put_image(txn, folder_path, img_name, current_idx) is not None:
+                    current_idx += 1
 
             txn.put(b'__current_index__', str(current_idx).encode())
+
 
     @exception_logger
     def get_last_index(self, txn):
@@ -88,11 +90,11 @@ class LMDB:
         self.env.close()
 
     @exception_logger
-    def get_by_index(self, index):      
-      key = f"{index:010d}".encode()
-      with self.env.begin(write=False) as txn:
-          value = txn.get(key)
-          
-          buffer = io.BytesIO(value)
-          tensor, label = torch.load(buffer)
-          return tensor, label
+    def get_by_index(self, index):
+        key = f"{index:010d}".encode()
+        with self.env.begin(write=False) as txn:
+            value = txn.get(key)
+
+            buffer = io.BytesIO(value)
+            tensor, label = torch.load(buffer)
+            return tensor, label

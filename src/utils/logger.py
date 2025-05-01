@@ -24,13 +24,6 @@ def exception_logger(function):
             return None
     return wrapper
 
-def log_exception(msg):
-    frame = inspect.currentframe().f_back
-    filename = frame.f_code.co_filename.split('/')[-1]
-    lineno = frame.f_lineno
-    func = frame.f_code.co_name
-    full_msg = f"{filename}:{lineno} ({func}) - {msg}"
-    logging.error(full_msg)
 
 
 

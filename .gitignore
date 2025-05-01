@@ -1,5 +1,4 @@
 .idea/
 __pycache__/
-models/
 *.log
 .env

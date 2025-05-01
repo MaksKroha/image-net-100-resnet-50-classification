@@ -5,6 +5,6 @@ def timed(function):
         start_time = time.time()
         result = function(*args, **kwargs)
         end_time = time.time()
-        print(f"- {function.__name__} {end_time - start_time} s")
+        print(f"- {function.__name__} {end_time - start_time}s")
         return result
     return wrapper

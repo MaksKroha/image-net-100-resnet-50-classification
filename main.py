@@ -6,11 +6,25 @@ from src.utils.timer import timed
 
 load_dotenv()
 # setting global variables
-LOG_FILE=getenv('LOG_FILE')
+LMDB_PATH: str = getenv("LMDB_PATH")
+LABELS_JSON_PATH: str = getenv("LABELS_JSON_PATH")
+TRAINED_MODEL_PATH: str = getenv("TRAINED_MODEL_PATH")
 
+LOG_FILE: str = getenv('LOG_FILE')
+EPOCHS: int = int(getenv('EPOCHS'))
+T_MAX: int = int(getenv('T_MAX'))
+LR: float = float(getenv('LR'))
+LR_MIN: float = float(getenv('LR_MIN'))
+WEIGHT_DECAY: float = float(getenv('WEIGHT_DECAY'))
+DEVICE: str = getenv('DEVICE')
+OUTPUT_CLASSES: int = int(getenv('OUTPUT_CLASSES'))
+BATCH_SIZE: int = int(getenv('BATCH_SIZE'))
+NUM_WORKERS: int = int(getenv('NUM_WORKERS'))
+PREFETCH_FACTOR: int = int(getenv('PREFETCH_FACTOR'))
 
 # Setting settings for logining file
 import logging
+
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
@@ -32,67 +46,53 @@ from src.data.convertor import LMDB
 
 import sys
 
+
 @exception_logger
 def main(*args, **kwargs):
-    lmdb_path = "/home/maksymkroha/MineFiles/kaggle/image-net-100/lmdb"
-    labels_json = "/home/maksymkroha/MineFiles/imageNetResNetClassification/dataset/labels.json"
-    trained_model = "/home/maksymkroha/MineFiles/imageNetResNetClassification/models/trained_model.pt"
+    lmdb_db = LMDB(LMDB_PATH, LABELS_JSON_PATH)
 
-    lmdb_db = LMDB(lmdb_path, labels_json)
-    
     with lmdb_db.env.begin(write=False) as txn:
         lmdb_length = lmdb_db.get_last_index(txn)
         if lmdb_length is None:
-            print("Wrong value for lmdb length", file=sys.stderr)
-            return 1
+            raise RuntimeError(f"LMDB length is None")
 
-
-    epochs = 5
-    t_max = 1
-    lr = 1e-4/2
-    lr_min = 1e-4/2
-    weight_decay = 5e-5
-    device = "cpu"
-    output_classes = 100
-    batch_size = 128
-    num_workers = 1
-    prefetch_factor = 2
-
-    print(f"-- learning rate - {lr}")
-    print(f"-- lr_min - {lr_min}")
-    print(f"-- weight decay - {weight_decay}")
+    print(f"-- learning rate - {LR}")
+    print(f"-- lr_min - {LR_MIN}")
+    print(f"-- weight decay - {WEIGHT_DECAY}")
     time.sleep(5)
 
-    model = Model(output_classes)
+    model = Model(OUTPUT_CLASSES)
     analyzer = Analyzer()
 
-    exception_logger(timed(model.load_state_dict))(torch.load(trained_model,
+    exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
                                                               weights_only=True,
-                                                              map_location=device))
-
+                                                              map_location=DEVICE))
 
     # Dataset configuration
     print("---- Dataloader/dataloader configure ------")
     dataset = ImageNetDataset(lmdb_db, lmdb_length)
-    dataloader = DataLoader(dataset, batch_size=batch_size,
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE,
                             shuffle=True, drop_last=True,
-                            pin_memory=True, num_workers=num_workers,
-                            prefetch_factor=prefetch_factor)
+                            pin_memory=True, num_workers=NUM_WORKERS,
+                            prefetch_factor=PREFETCH_FACTOR)
 
     # training
     print(f"---- Train starts")
-    model = exception_logger(timed(model.to))(device)
+    model = exception_logger(timed(model.to))(DEVICE)
 
-    if train(model, dataloader, epochs, device, lr, t_max, lr_min, weight_decay, analyzer) is None:
+    if train(model, dataloader, EPOCHS, DEVICE, LR, T_MAX, LR_MIN,
+             WEIGHT_DECAY, analyzer) is None:
         print("---- Train ends with exception ", file=sys.stderr)
-    
-    exception_logger(timed(torch.save))(model.state_dict(), trained_model)
+
+    exception_logger(timed(torch.save))(model.state_dict(), TRAINED_MODEL_PATH)
 
     # evaluation
     model = exception_logger(timed(model.to))("cpu")
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True, drop_last=True)
-    timed(evaluate(model, dataloader, 100))
+    timed(evaluate(model, dataloader, 10))
 
+    return 0
 
 if __name__ == "__main__":
-    main()
+    if main() is None:
+        print("During executing main errors occurs", file=sys.stderr)

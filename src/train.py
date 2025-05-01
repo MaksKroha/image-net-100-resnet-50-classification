@@ -2,22 +2,19 @@ import torch
 from torch.utils.data import DataLoader
 from src.model.neural_net import Model
 from src.backward import backward
-from src.utils.logger import exception_logger, log_exception
+from src.utils.logger import exception_logger
 from src.utils.timer import timed
 
 
 @timed
-def learning_cycle(model, optim, device, analyzer, scheduler, batch):
-    try:
-        batch['labels'] = batch['labels'].to(device)
-        batch['image'] = batch['image'].to(device)
+@exception_logger
+def learning_cycle(model, optim, device, analyzer, batch):
+    batch['labels'] = batch['labels'].to(device)
+    batch['image'] = batch['image'].to(device)
 
-        logits = model(batch['image'])
+    logits = model(batch['image'])
 
-        backward(logits, batch['labels'], optim, analyzer=analyzer)
-        scheduler.step()
-    except Exception as e:
-        log_exception(str(e))
+    backward(logits, batch['labels'], optim, analyzer=analyzer)
 
 
 @exception_logger
@@ -44,5 +41,7 @@ def train(model: Model, data_loader: DataLoader, epochs: int,
 
     for epoch in range(epochs):
         for i, batch in enumerate(data_loader):
-            learning_cycle(model, optim, device, analyzer, scheduler, batch)
+            learning_cycle(model, optim, device, analyzer, batch)
+        scheduler.step()
+
     return 0
