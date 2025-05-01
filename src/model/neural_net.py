@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from src.utils.logger import exception_logger
 
 
 class Model(nn.Module):
@@ -111,6 +112,7 @@ class Model(nn.Module):
 
         self.fcn = nn.Linear(2048, output_classes)
 
+    @exception_logger
     def forward(self, input_tensors):
         convs_x = [self.conv2_x, self.conv3_x, self.conv4_x, self.conv5_x]
         skip_cons_x = [self.skip_con2_x, self.skip_con3_x, self.skip_con4_x, self.skip_con5_x]
