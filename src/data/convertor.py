@@ -24,14 +24,14 @@ class LMDB:
 
     @exception_logger
     def get_label(self, image_path):
-        if len(image_path) > 10 and image_path[:9] in self.json_data:
+        if len(image_path) >= 9 and image_path[:9] in self.json_data:
             return self.json_data[image_path[:9]]["index"]
         else:
             raise NameError("Bad jpeg file name (there is no nxxxxxxxx)")
 
 
     @exception_logger
-    def __put_image(self, txn, folder_path, img_name, current_idx):
+    def __put_image(self, txn, folder_path, img_name, current_idx, label):
         if not (img_name.lower().endswith(".jpeg") or img_name.lower().endswith(".jpg")):
             return None
 
@@ -42,7 +42,7 @@ class LMDB:
             if tensor.dtype != torch.uint8:
                 tensor = tensor.to(torch.uint8)
 
-            label = self.get_label(img_name)
+            label = self.get_label(img_name) if label is None else label
 
             key = f"{current_idx:010d}".encode()
             value = (tensor, label)
@@ -55,7 +55,7 @@ class LMDB:
 
 
     @exception_logger
-    def add_images_from_folder(self, folder_path):
+    def add_images_from_folder(self, folder_path, label=None):
         """
         Add all images from a folder to LMDB
         """
@@ -68,10 +68,11 @@ class LMDB:
                 raise IndexError("LMDB wrong index")
 
             for img_name in image_names:
-                if self.__put_image(txn, folder_path, img_name, current_idx) is not None:
+                if self.__put_image(txn, folder_path, img_name, current_idx, label) is not None:
                     current_idx += 1
 
             txn.put(b'__current_index__', str(current_idx).encode())
+        return 0
 
 
     @exception_logger

@@ -6,7 +6,6 @@ from src.utils.logger import exception_logger
 from src.utils.timer import timed
 
 
-@timed
 @exception_logger
 def learning_cycle(model, optim, device, analyzer, batch):
     batch['labels'] = batch['labels'].to(device)
@@ -18,7 +17,8 @@ def learning_cycle(model, optim, device, analyzer, batch):
 
 
 @exception_logger
-def train(model: Model, data_loader: DataLoader, epochs: int,
+def train(model: Model, train_data_loader: DataLoader,
+          test_dataloader: DataLoader, epochs: int,
           device: str, lr: float, t_max: int,
           lr_min: float, weight_decay: float,
           analyzer=None):
@@ -34,14 +34,25 @@ def train(model: Model, data_loader: DataLoader, epochs: int,
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA not available")
 
+    model = model.to(device)
     model.train()  # enable train mode
 
-    optim = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optim = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=t_max, eta_min=lr_min)
 
     for epoch in range(epochs):
-        for i, batch in enumerate(data_loader):
+        for i, batch in enumerate(train_data_loader):
             learning_cycle(model, optim, device, analyzer, batch)
         scheduler.step()
 
+        model.eval()
+        with torch.no_grad():
+            for i, batch in enumerate(test_dataloader):
+                criterion = torch.nn.CrossEntropyLoss()
+                logits = model(batch['image'])
+                loss = criterion(logits, batch['labels'])
+                analyzer.add_test_val(loss.item())
+        model.train()
+
+        analyzer.show_accuracy()
     return 0

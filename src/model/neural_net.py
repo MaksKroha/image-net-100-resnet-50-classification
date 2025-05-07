@@ -1,11 +1,15 @@
 import torch
 from torch import nn
 from src.utils.logger import exception_logger
-
+import torchvision.ops as ops
 
 class Model(nn.Module):
-    def __init__(self, output_classes, dropout=0.5):
+    def __init__(self, output_classes, dropout=0.5, stochastic_depth_p=0.5):
         torch.set_default_dtype(torch.float32)
+
+        # probability for last layer
+        self.stochastic_depth_p = stochastic_depth_p
+
         super(Model, self).__init__()
 
         # conv1_x
@@ -120,12 +124,18 @@ class Model(nn.Module):
         tensor = self.main_conv(input_tensors)
         tensor = self.main_max_pool(tensor)
 
+        total_blocks = sum(len(conv) for conv in convs_x)
+        current_block = 0
+
         for i in range(len(convs_x)):
             for block_id in range(len(convs_x[i])):
                 skip_con = skip_cons_x[i][block_id](tensor)
 
                 for layer in convs_x[i][block_id]:
                     tensor = layer(tensor)
+
+                p = 1.0 - (current_block / total_blocks) * (1.0 - self.stochastic_depth_p)
+                tensor = ops.StochasticDepth(p=p, mode="row")(tensor)
 
                 tensor = skip_con + tensor
                 tensor = nn.functional.relu(tensor, inplace=True)
