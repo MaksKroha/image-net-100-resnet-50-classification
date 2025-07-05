@@ -21,7 +21,7 @@ def train(model: Model, train_data_loader: DataLoader,
           test_dataloader: DataLoader, epochs: int,
           device: str, lr: float, t_max: int,
           lr_min: float, weight_decay: float,
-          analyzer=None):
+          analyzer=None, trained_model_path: str = None):
     # model - neural net model to train
     # data_loader - data loader with pin_memory=device
     # epochs - the num of epochs
@@ -54,5 +54,6 @@ def train(model: Model, train_data_loader: DataLoader,
                 analyzer.add_test_val(loss.item())
         model.train()
 
+        torch.save(model.state_dict(), trained_model_path)
         analyzer.show_accuracy()
     return 0

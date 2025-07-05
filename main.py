@@ -74,7 +74,6 @@ def main_train(*args, **kwargs):
                         "Training loss curve",
                         "red",
                         "green")
-    model = Model(OUTPUT_CLASSES, DROPOUT, WEIGHT_DECAY)
 
     print("---- Loading trained model ----")
     exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
@@ -84,15 +83,15 @@ def main_train(*args, **kwargs):
     print("---- Dataset/dataloader configure ------")
     train_dataset = ImageNetDataset(train_lmdb_db, train_lmdb_length)
     test_dataset = ImageNetDataset(test_lmdb_db, test_lmdb_length)
-    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, drop_last=True,
+    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, drop_last=True,
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True, drop_last=True,
                                  num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
 
     # training
     print(f"---- Train starts")
     train(model, train_dataloader, test_dataloader, EPOCHS, DEVICE, LR, T_MAX, LR_MIN,
-          WEIGHT_DECAY, analyzer)
+          WEIGHT_DECAY, analyzer, TRAINED_MODEL_PATH)
 
     exception_logger(timed(torch.save))(model.state_dict(), TRAINED_MODEL_PATH)
 
