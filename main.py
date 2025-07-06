@@ -76,17 +76,17 @@ def main_train(*args, **kwargs):
                         "green")
     model = Model(OUTPUT_CLASSES, DROPOUT, WEIGHT_DECAY)
 
-    print("---- Loading trained model ----")
-    exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
-                                                              weights_only=True,
-                                                              map_location=DEVICE))
+    # print("---- Loading trained model ----")
+    # exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
+                                                              # weights_only=True,
+                                                              # map_location=DEVICE))
 
     print("---- Dataset/dataloader configure ------")
     train_dataset = ImageNetDataset(train_lmdb_db, train_lmdb_length)
     test_dataset = ImageNetDataset(test_lmdb_db, test_lmdb_length)
-    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False, drop_last=True,
+    train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE,shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, drop_last=True,
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True, drop_last=True,
                                  num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
 
     # training

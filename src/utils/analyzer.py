@@ -20,7 +20,7 @@ class Analyzer:
 
     @exception_logger
     def add_train_val(self, value: float, epoch: int):
-        if len(self.__train_accuracy) < epoch:
+        if len(self.__train_accuracy) < epoch + 1:
             self.__train_accuracy.append([])
         else:
             if isinstance(value, float):
@@ -30,7 +30,7 @@ class Analyzer:
 
     @exception_logger
     def add_test_val(self, value: float, epoch: int):
-        if len(self.__test_accuracy) < epoch:
+        if len(self.__test_accuracy) < epoch + 1:
             self.__test_accuracy.append([])
         else:
             if isinstance(value, float):
@@ -52,12 +52,12 @@ class Analyzer:
         if self.__train_accuracy:
             lengths = [len(epoch) for epoch in self.__train_accuracy]
             accuracy = [sum(epoch) / length for epoch, length in zip(self.__train_accuracy, lengths)]
-            ax.plot(accuracy, 'o-', color=self.train_color, title="train")
+            ax.plot(accuracy, 'o-', color=self.train_color)
 
         if self.__test_accuracy:
             lengths = [len(epoch) for epoch in self.__test_accuracy]
             accuracy = [sum(epoch) / length for epoch, length in zip(self.__test_accuracy, lengths)]
-            ax.plot(accuracy, 'o-', color=self.test_color, title="test")
+            ax.plot(accuracy, 'o-', color=self.test_color)
         ax.set_title(self.title)
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
