@@ -74,7 +74,6 @@ def main_train(*args, **kwargs):
                         "Training loss curve",
                         "red",
                         "green")
-    model = Model(OUTPUT_CLASSES, DROPOUT, WEIGHT_DECAY)
 
     # print("---- Loading trained model ----")
     # exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
@@ -92,7 +91,7 @@ def main_train(*args, **kwargs):
     # training
     print(f"---- Train starts")
     train(model, train_dataloader, test_dataloader, EPOCHS, DEVICE, LR, T_MAX, LR_MIN,
-          WEIGHT_DECAY, analyzer)
+          WEIGHT_DECAY, analyzer, TRAINED_MODEL_PATH)
 
     exception_logger(timed(torch.save))(model.state_dict(), TRAINED_MODEL_PATH)
 

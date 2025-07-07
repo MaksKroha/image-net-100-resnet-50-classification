@@ -35,6 +35,8 @@ class Model(nn.Module):
             self.conv2_x[i].append(nn.BatchNorm2d(64))
             self.conv2_x[i].append(nn.ReLU(inplace=True))
 
+            self.conv2_x[i].append(nn.Dropout2d(dropout))
+
             self.conv2_x[i].append(nn.Conv2d(64, 256, kernel_size=1, bias=False))
             self.conv2_x[i].append(nn.BatchNorm2d(256))
             input_size = 256
@@ -56,6 +58,8 @@ class Model(nn.Module):
             self.conv3_x[i].append(nn.Conv2d(128, 128, kernel_size=3, padding=1, bias=False))
             self.conv3_x[i].append(nn.BatchNorm2d(128))
             self.conv3_x[i].append(nn.ReLU(inplace=True))
+
+            self.conv2_x[i].append(nn.Dropout2d(dropout))
 
             self.conv3_x[i].append(nn.Conv2d(128, 512, kernel_size=1, bias=False))
             self.conv3_x[i].append(nn.BatchNorm2d(512))
@@ -82,6 +86,8 @@ class Model(nn.Module):
             self.conv4_x[i].append(nn.BatchNorm2d(256))
             self.conv4_x[i].append(nn.ReLU(inplace=True))
 
+            self.conv2_x[i].append(nn.Dropout2d(dropout))
+
             self.conv4_x[i].append(nn.Conv2d(256, 1024, kernel_size=1, bias=False))
             self.conv4_x[i].append(nn.BatchNorm2d(1024))
             input_size = 1024
@@ -105,6 +111,8 @@ class Model(nn.Module):
             self.conv5_x[i].append(nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False))
             self.conv5_x[i].append(nn.BatchNorm2d(512))
             self.conv5_x[i].append(nn.ReLU(inplace=True))
+
+            self.conv2_x[i].append(nn.Dropout2d(dropout))
 
             self.conv5_x[i].append(nn.Conv2d(512, 2048, kernel_size=1, bias=False))
             self.conv5_x[i].append(nn.BatchNorm2d(2048))
