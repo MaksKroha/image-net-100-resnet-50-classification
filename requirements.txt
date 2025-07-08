@@ -1,9 +1,9 @@
-# torch reuirements include only cpu version
-torch==2.6.0+cpu
-torchvision==0.21.0+cpu
-pandas==2.2.3
-numpy==2.1.2
-scikit-image==0.25.2
-python-dotenv==1.0.1
-matplotlib==3.10.1
-IPython==9.2.0
+torch
+torchvision
+pandas
+numpy
+scikit-image
+python-dotenv
+matplotlib
+IPython
+lmdb

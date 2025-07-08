@@ -49,8 +49,7 @@ from src.data.convertor import LMDB
 
 import json
 
-@exception_logger
-def main_train(*args, **kwargs):
+if __name__ == "__main__":
     train_lmdb_db = LMDB(TRAIN_LMDB_PATH, LABELS_JSON_PATH)
     test_lmdb_db = LMDB(TEST_LMDB_PATH, LABELS_JSON_PATH)
     json_data = json.load(open(LABELS_JSON_PATH))
@@ -69,33 +68,29 @@ def main_train(*args, **kwargs):
     time.sleep(5)
 
     model = Model(OUTPUT_CLASSES, DROPOUT, STOCHASTIC_DEPTH_P)
-    analyzer = Analyzer("epochs number",
-                        "mean loss",
+    print()
+    analyzer = Analyzer("batch number",
+                        "loss",
                         "Training loss curve",
                         "red",
                         "green")
 
-    # print("---- Loading trained model ----")
-    # exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
-                                                              # weights_only=True,
-                                                              # map_location=DEVICE))
+    print("---- Loading trained model ----")
+    exception_logger(timed(model.load_state_dict))(torch.load(TRAINED_MODEL_PATH,
+                                                              weights_only=True,
+                                                              map_location=DEVICE))
 
     print("---- Dataset/dataloader configure ------")
     train_dataset = ImageNetDataset(train_lmdb_db, train_lmdb_length)
-    test_dataset = ImageNetDataset(test_lmdb_db, test_lmdb_length)
+    # test_dataset = ImageNetDataset(test_lmdb_db, test_lmdb_length)
     train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE,shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True, drop_last=True,
-                                 num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
+    # test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True, drop_last=True,
+                                #  num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR)
 
     # training
     print(f"---- Train starts")
-    train(model, train_dataloader, test_dataloader, EPOCHS, DEVICE, LR, T_MAX, LR_MIN,
+    train(model, train_dataloader, EPOCHS, DEVICE, LR, T_MAX, LR_MIN,
           WEIGHT_DECAY, analyzer, TRAINED_MODEL_PATH)
 
     exception_logger(timed(torch.save))(model.state_dict(), TRAINED_MODEL_PATH)
-
-    return 0
-
-if __name__ == "__main__":
-    main_train()
