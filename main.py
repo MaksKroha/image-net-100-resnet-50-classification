@@ -21,7 +21,9 @@ DEVICE: str = getenv('DEVICE')
 OUTPUT_CLASSES: int = int(getenv('OUTPUT_CLASSES'))
 BATCH_SIZE: int = int(getenv('BATCH_SIZE'))
 NUM_WORKERS: int = int(getenv('NUM_WORKERS'))
-PREFETCH_FACTOR: int = int(getenv('PREFETCH_FACTOR'))
+PREFETCH_FACTOR = getenv('PREFETCH_FACTOR')
+if PREFETCH_FACTOR == 'None': PREFETCH_FACTOR = None
+else: PREFETCH_FACTOR = int(PREFETCH_FACTOR)
 EVAL_MODE: int = int(getenv('EVAL_MODE'))
 DROPOUT: float = float(getenv('DROPOUT'))
 STOCHASTIC_DEPTH_P: float = float(getenv('STOCHASTIC_DEPTH_P'))
@@ -29,6 +31,9 @@ STOCHASTIC_DEPTH_P: float = float(getenv('STOCHASTIC_DEPTH_P'))
 # Setting settings for logining file
 import logging
 
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+    
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
@@ -50,21 +55,27 @@ from src.data.convertor import LMDB
 import json
 
 if __name__ == "__main__":
-    train_lmdb_db = LMDB(TRAIN_LMDB_PATH, LABELS_JSON_PATH)
+    train_lmdb_db = LMDB(TRAIN_LMDB_PATH, LABELS_JSON_PATH)    
     test_lmdb_db = LMDB(TEST_LMDB_PATH, LABELS_JSON_PATH)
     json_data = json.load(open(LABELS_JSON_PATH))
 
+    train_lmdb_db._open_env(readonly=True)
     with train_lmdb_db.env.begin(write=False) as txn:
         train_lmdb_length = train_lmdb_db.get_last_index(txn)
-    with test_lmdb_db.env.begin(write=False) as txn:
-        test_lmdb_length = test_lmdb_db.get_last_index(txn)
+    
+    # test_lmdb_db.init_env()
+    # with test_lmdb_db.env.begin(write=False) as txn:
+    #     test_lmdb_length = test_lmdb_db.get_last_index(txn)
+    # test_lmdb_db.close()
 
     print(f"train_lmdb_length: {train_lmdb_length}")
-    print(f"test_lmdb_length: {test_lmdb_length}")
+    # print(f"test_lmdb_length: {test_lmdb_length}")
 
     print(f"-- learning rate - {LR}")
     print(f"-- lr_min - {LR_MIN}")
     print(f"-- weight decay - {WEIGHT_DECAY}")
+    print(f"-- batch size - {BATCH_SIZE}")
+    print(f"-- epochs - {EPOCHS}")
     time.sleep(5)
 
     model = Model(OUTPUT_CLASSES, DROPOUT, STOCHASTIC_DEPTH_P)

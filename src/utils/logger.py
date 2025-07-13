@@ -21,7 +21,6 @@ def exception_logger(function):
             func = frame.f_code.co_name
             full_msg = f"{filename}:{lineno} ({func}) - {str(e)}"
             logging.error(full_msg)
-            print(full_msg)
             return None
     return wrapper
 

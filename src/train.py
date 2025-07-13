@@ -5,15 +5,14 @@ from src.backward import backward
 from src.utils.logger import exception_logger
 from src.utils.timer import timed
 
+
 @exception_logger
 def learning_cycle(model, optim, device, analyzer, batch, i_batch):
     batch['labels'] = batch['labels'].to(device)
     batch['image'] = batch['image'].to(device)
 
     logits = model(batch['image'])
-
     backward(logits, batch['labels'], optim, i_batch, analyzer=analyzer)
-
 
 @exception_logger
 def train(model: Model, train_data_loader: DataLoader, epochs: int,

@@ -7,7 +7,7 @@ class Model(nn.Module):
     def __init__(self, output_classes, dropout=0.5, stochastic_depth_p=0.5):
         torch.set_default_dtype(torch.float32)
 
-        # probability for last layer
+        # probability for last layer to remain
         self.stochastic_depth_p = stochastic_depth_p
 
         super(Model, self).__init__()
@@ -141,12 +141,19 @@ class Model(nn.Module):
 
                 for layer in convs_x[i][block_id]:
                     tensor = layer(tensor)
+                
+                # probability to be zeroed
+                p = (current_block / total_blocks) * (1.0 - self.stochastic_depth_p)
 
-                p = 1.0 - (current_block / total_blocks) * (1.0 - self.stochastic_depth_p)
-                tensor = ops.StochasticDepth(p=p, mode="row")(tensor)
+                if self.training:
+                    tensor = ops.stochastic_depth(tensor, p=p, mode="row", training=True)
+                else: 
+                    tensor = tensor * (1 - p)
 
                 tensor = skip_con + tensor
                 tensor = nn.functional.relu(tensor, inplace=True)
+
+                current_block += 1
 
         tensor = torch.mean(tensor, dim=[2, 3])
         tensor = self.dropout(tensor)
