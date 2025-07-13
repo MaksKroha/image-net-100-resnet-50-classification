@@ -7,18 +7,15 @@ from src.utils.timer import timed
 
 
 @exception_logger
-def learning_cycle(model, optim, device, analyzer, batch):
+def learning_cycle(model, optim, device, analyzer, batch, i_batch):
     batch['labels'] = batch['labels'].to(device)
     batch['image'] = batch['image'].to(device)
 
     logits = model(batch['image'])
-
-    backward(logits, batch['labels'], optim, analyzer=analyzer)
-
+    backward(logits, batch['labels'], optim, i_batch, analyzer=analyzer)
 
 @exception_logger
-def train(model: Model, train_data_loader: DataLoader,
-          test_dataloader: DataLoader, epochs: int,
+def train(model: Model, train_data_loader: DataLoader, epochs: int,
           device: str, lr: float, t_max: int,
           lr_min: float, weight_decay: float,
           analyzer=None, trained_model_path: str = None):
@@ -42,18 +39,10 @@ def train(model: Model, train_data_loader: DataLoader,
 
     for epoch in range(epochs):
         for i, batch in enumerate(train_data_loader):
-            learning_cycle(model, optim, device, analyzer, batch)
+            learning_cycle(model, optim, device, analyzer, batch, epoch)
+            analyzer.show_accuracy()
         scheduler.step()
 
-        model.eval()
-        with torch.no_grad():
-            for i, batch in enumerate(test_dataloader):
-                criterion = torch.nn.CrossEntropyLoss()
-                logits = model(batch['image'])
-                loss = criterion(logits, batch['labels'])
-                analyzer.add_test_val(loss.item())
-        model.train()
 
         torch.save(model.state_dict(), trained_model_path)
-        analyzer.show_accuracy()
     return 0

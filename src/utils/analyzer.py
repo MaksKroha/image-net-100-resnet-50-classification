@@ -19,24 +19,18 @@ class Analyzer:
         self.test_color = test_color if is_valid_color(test_color) else "blue"
 
     @exception_logger
-    def add_train_val(self, value: float, epoch: int):
-        if len(self.__train_accuracy) < epoch:
-            self.__train_accuracy.append([])
+    def add_train_val(self, value: float):
+        if isinstance(value, float):
+            self.__train_accuracy.append(value)
         else:
-            if isinstance(value, float):
-                self.__train_accuracy[epoch].append(value)
-            else:
-                raise TypeError('loss must be a float')
+            raise TypeError('loss must be a float')
 
     @exception_logger
-    def add_test_val(self, value: float, epoch: int):
-        if len(self.__test_accuracy) < epoch:
-            self.__test_accuracy.append([])
+    def add_test_val(self, value: float):
+        if isinstance(value, float):
+            self.__test_accuracy.append(value)
         else:
-            if isinstance(value, float):
-                self.__test_accuracy[epoch].append(value)
-            else:
-                raise TypeError('loss must be a float')
+            raise TypeError('loss must be a float')
 
     def get_train_accuracy(self):
         return self.__train_accuracy
@@ -50,14 +44,10 @@ class Analyzer:
         fig, ax = plt.subplots(figsize=(8, 5))
         ax.cla()
         if self.__train_accuracy:
-            lengths = [len(epoch) for epoch in self.__train_accuracy]
-            accuracy = [sum(epoch) / length for epoch, length in zip(self.__train_accuracy, lengths)]
-            ax.plot(accuracy, 'o-', color=self.train_color, title="train")
+            ax.plot(self.__train_accuracy, 'o-', color=self.train_color)
 
         if self.__test_accuracy:
-            lengths = [len(epoch) for epoch in self.__test_accuracy]
-            accuracy = [sum(epoch) / length for epoch, length in zip(self.__test_accuracy, lengths)]
-            ax.plot(accuracy, 'o-', color=self.test_color, title="test")
+            ax.plot(self.__test_accuracy, 'o-', color=self.test_color)
         ax.set_title(self.title)
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
